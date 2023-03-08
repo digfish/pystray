@@ -19,6 +19,7 @@ import ctypes
 
 from ctypes import wintypes
 
+
 windll = ctypes.LibraryLoader(ctypes.WinDLL)
 
 
@@ -83,6 +84,9 @@ NIM_DELETE = 0x00000002
 NIM_SETFOCUS = 0x00000003
 NIM_SETVERSION = 0x00000004
 
+SM_CXSMICON = 49
+SM_CYSMICON = 50
+
 TPM_CENTERALIGN = 0x0004
 TPM_LEFTALIGN = 0x0000
 TPM_RIGHTALIGN = 0x0008
@@ -108,6 +112,7 @@ PM_NOREMOVE = 0
 COLOR_WINDOW = 5
 HWND_MESSAGE = -3
 IMAGE_ICON = 1
+IMAGE_BITMAP = 0
 
 
 LPMSG = ctypes.POINTER(wintypes.MSG)
@@ -201,7 +206,7 @@ def _err(result, func, arguments):
     """A *ctypes* ``errchecker`` that ensures truthy values.
     """
     if not result:
-        raise ctypes.WinError()
+        raise ctypes.WinError( )
     else:
         return result
 
@@ -267,6 +272,12 @@ GetModuleHandle.argtypes = (
     wintypes.LPCWSTR,)
 GetModuleHandle.restype = wintypes.HMODULE
 GetModuleHandle.errcheck = _err
+
+GetSystemMetrics = windll.user32.GetSystemMetrics
+GetSystemMetrics.argtypes = (
+    wintypes.INT,)
+GetSystemMetrics.restype = wintypes.INT
+GetSystemMetrics.errcheck = _err
 
 InsertMenuItem = windll.user32.InsertMenuItemW
 InsertMenuItem.argtypes = (
@@ -356,3 +367,24 @@ except KeyError:
         This is used on version of *Windows* prior to *Windows Vista*.
         """
         return True
+
+
+
+
+def PackMENUITEMINFO(text=None, hbmpItem=None, wID=None, hSubMenu=None):
+    res = MENUITEMINFO()
+    res.cbSize = ctypes.sizeof(res)
+    res.fMask = 0
+    if hbmpItem is not None:
+        res.fMask |= MIIM_BITMAP
+        res.hbmpItem = hbmpItem
+    if wID is not None:
+        res.fMask |= MIIM_ID
+        res.wID = wID
+    if text is not None:
+        res.fMask |= MIIM_STRING
+        res.dwTypeData = text
+    if hSubMenu is not None:
+        res.fMask |= MIIM_SUBMENU
+        res.hSubMenu = hSubMenu
+    return res

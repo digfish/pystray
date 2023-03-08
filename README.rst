@@ -8,3 +8,7 @@ and *Windows*.
 
 See `here <https://pystray.readthedocs.io/en/latest/>`_ for the full
 documentation.
+
+Modifications
+=============================
+This fork adds suport for icons on the systray menu. It only works on Windows.

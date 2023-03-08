@@ -434,7 +434,7 @@ class MenuItem(object):
     """
     def __init__(
             self, text, action, checked=None, radio=False, default=False,
-            visible=True, enabled=True):
+            visible=True, enabled=True, icon = None):
         self.__name__ = str(text)
         self._text = self._wrap(text or '')
         self._action = self._assert_action(action)
@@ -443,6 +443,7 @@ class MenuItem(object):
         self._default = self._wrap(default)
         self._visible = self._wrap(visible)
         self._enabled = self._wrap(enabled)
+        self._icon = self._wrap(icon)
 
     def __call__(self, icon):
         if not isinstance(self._action, Menu):
@@ -514,6 +515,12 @@ class MenuItem(object):
         """The submenu used by this menu item, or ``None``.
         """
         return self._action if isinstance(self._action, Menu) else None
+
+    @property
+    def icon(self):
+        """The icon used by this menu item, or ``None``.
+        """
+        return self._icon(self)
 
     def _assert_action(self, action):
         """Ensures that a callable can be called with the expected number of

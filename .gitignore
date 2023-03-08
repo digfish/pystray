@@ -2,7 +2,11 @@
 *.eggs/
 *.pyc
 *.sublime-*
-
+*.ico
 build/*
 dist/*
-
+*.py
+.env
+*.bmp
+.idea/*
+.vscode/*

@@ -19,7 +19,11 @@ import ctypes
 import threading
 
 from ctypes import wintypes
+
 from six.moves import queue
+import PIL.Image
+import tempfile
+
 
 from ._util import serialized_image, win32
 from . import _base
@@ -299,18 +303,56 @@ class Icon(_base.Icon):
                 fType=win32.MFT_SEPARATOR)
 
         else:
+            import os
+            hIcon = None
+            if descriptor.icon :
+                with serialized_image(descriptor.icon, format='ico') as icon_ico:
+                    tmpbmpfile = tempfile.NamedTemporaryFile(suffix='.bmp', delete=False)
+                    PIL.Image.open(icon_ico).save(tmpbmpfile, 'BMP')
+                    tmpbmpfile.close()
+                    hIcon = win32.LoadImage(
+                        None,
+                        tmpbmpfile.name,
+                        win32.IMAGE_BITMAP,
+                        0,
+                        0,
+                        win32.LR_LOADFROMFILE
+                    )
+
+                    os.remove(tmpbmpfile.name)
+
+                    # ret_value = win32.PackMENUITEMINFO(
+                    #         text=descriptor.text,
+                    #         hbmpItem=icon,
+                    #         wID=len(callbacks),
+                    #         hSubMenu=self._create_menu(descriptor.submenu, callbacks)
+                    #             if descriptor.submenu
+                    #             else None
+                    #     )
+                    # return  ret_value
+
             return win32.MENUITEMINFO(
                 cbSize=ctypes.sizeof(win32.MENUITEMINFO),
+
                 fMask=win32.MIIM_ID | win32.MIIM_STRING | win32.MIIM_STATE
-                | win32.MIIM_FTYPE | win32.MIIM_SUBMENU,
+                      | win32.MIIM_FTYPE | win32.MIIM_SUBMENU | win32.MIIM_BITMAP,
+
                 wID=len(callbacks),
+
                 dwTypeData=descriptor.text,
+
+                fstate=win32.MFS_ENABLED,
                 fState=0
-                | (win32.MFS_DEFAULT if descriptor.default else 0)
-                | (win32.MFS_CHECKED if descriptor.checked else 0)
-                | (win32.MFS_DISABLED if not descriptor.enabled else 0),
+                       | (win32.MFS_DEFAULT if descriptor.default else 0)
+                       | (win32.MFS_CHECKED if descriptor.checked else 0)
+                       | (win32.MFS_DISABLED if not descriptor.enabled else 0),
+
                 fType=0
-                | (win32.MFT_RADIOCHECK if descriptor.radio else 0),
+                      | (win32.MFT_RADIOCHECK if descriptor.radio else 0)
+                      | (win32.MFT_STRING if descriptor.text else 0),
+
+                hbmpItem=hIcon if hIcon else None,
+
                 hSubMenu=self._create_menu(descriptor.submenu, callbacks)
                 if descriptor.submenu
                 else None)
